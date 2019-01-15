@@ -10,16 +10,18 @@ package kotlin.script.experimental.jvmhost
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.util.PropertiesCollection
 
-open class JvmScriptEvaluationConfiguration : PropertiesCollection.Builder() {
+interface JvmScriptEvaluationConfigurationKeys
 
-    companion object : JvmScriptEvaluationConfiguration()
+open class JvmScriptEvaluationConfigurationBuilder : PropertiesCollection.Builder(), JvmScriptEvaluationConfigurationKeys {
+
+    companion object : JvmScriptEvaluationConfigurationBuilder()
 }
 
-val JvmScriptEvaluationConfiguration.baseClassLoader by PropertiesCollection.key<ClassLoader?>(Thread.currentThread().contextClassLoader)
+val JvmScriptEvaluationConfigurationKeys.baseClassLoader by PropertiesCollection.key<ClassLoader?>(Thread.currentThread().contextClassLoader)
 
-val JvmScriptEvaluationConfiguration.actualClassLoader by PropertiesCollection.key<ClassLoader?>()
+val JvmScriptEvaluationConfigurationKeys.actualClassLoader by PropertiesCollection.key<ClassLoader?>()
 
-val ScriptEvaluationConfiguration.jvm get() = JvmScriptEvaluationConfiguration()
+val ScriptEvaluationConfigurationKeys.jvm get() = JvmScriptEvaluationConfigurationBuilder()
 
 open class BasicJvmScriptEvaluator : ScriptEvaluator {
 
@@ -38,12 +40,12 @@ open class BasicJvmScriptEvaluator : ScriptEvaluator {
                 val updatedEvalConfiguration = when {
                     scriptEvaluationConfiguration == null -> ScriptEvaluationConfiguration {
                         // TODO: find out why dsl syntax doesn't work here
-                        set(JvmScriptEvaluationConfiguration.actualClassLoader, scriptClass.java.classLoader)
+                        set(JvmScriptEvaluationConfigurationBuilder.actualClassLoader, scriptClass.java.classLoader)
                     }
-                    scriptEvaluationConfiguration.getNoDefault(JvmScriptEvaluationConfiguration.actualClassLoader) == null ->
+                    scriptEvaluationConfiguration.getNoDefault(JvmScriptEvaluationConfigurationBuilder.actualClassLoader) == null ->
                         ScriptEvaluationConfiguration(scriptEvaluationConfiguration) {
                             // TODO: find out why dsl syntax doesn't work here
-                            set(JvmScriptEvaluationConfiguration.actualClassLoader, scriptClass.java.classLoader)
+                            set(JvmScriptEvaluationConfigurationBuilder.actualClassLoader, scriptClass.java.classLoader)
                         }
                     else -> scriptEvaluationConfiguration
                 }

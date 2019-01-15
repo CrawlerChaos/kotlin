@@ -13,9 +13,7 @@ import java.net.URLClassLoader
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvmhost.JvmScriptEvaluationConfiguration
-import kotlin.script.experimental.jvmhost.actualClassLoader
-import kotlin.script.experimental.jvmhost.baseClassLoader
+import kotlin.script.experimental.jvmhost.*
 
 class KJvmCompiledModule(
     generationState: GenerationState
@@ -54,12 +52,13 @@ class KJvmCompiledScript<out ScriptBase : Any>(
         get() = _otherScripts
 
     override suspend fun getClass(scriptEvaluationConfiguration: ScriptEvaluationConfiguration?): ResultWithDiagnostics<KClass<*>> = try {
-        val classLoader = scriptEvaluationConfiguration?.get(JvmScriptEvaluationConfiguration.actualClassLoader)
+        val classLoader = scriptEvaluationConfiguration?.get(ScriptEvaluationConfiguration.jvm.actualClassLoader)
             ?: run {
                 if (compiledModule == null)
-                    return ResultWithDiagnostics.Failure("Unable to load class $scriptClassFQName: no compiled module is provided".asErrorDiagnostics(path = sourceLocationId))
-                val baseClassLoader = scriptEvaluationConfiguration?.get(JvmScriptEvaluationConfiguration.baseClassLoader)
-                    ?: Thread.currentThread().contextClassLoader
+                    return ResultWithDiagnostics.Failure(
+                        "Unable to load class $scriptClassFQName: no compiled module is provided".asErrorDiagnostics(path = sourceLocationId)
+                    )
+                val baseClassLoader = scriptEvaluationConfiguration?.get(ScriptEvaluationConfiguration.jvm.baseClassLoader)
                 val dependencies = compilationConfiguration[ScriptCompilationConfiguration.dependencies]
                     ?.flatMap { (it as? JvmDependency)?.classpath?.map { it.toURI().toURL() } ?: emptyList() }
                 // TODO: previous dependencies and classloaders should be taken into account here
